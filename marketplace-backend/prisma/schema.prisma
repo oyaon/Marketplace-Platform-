@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  BUYER
+  SOLVER
+}
+
+enum ProjectStatus {
+  UNASSIGNED
+  ASSIGNED
+}
+
+enum TaskStatus {
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id       String   @id @default(uuid())
+  name     String
+  email    String   @unique
+  password String
+  role     Role     @default(SOLVER)
+
+  projects Project[] @relation("BuyerProjects")
+  requests Request[]
+}
+
+model Project {
+  id               String        @id @default(uuid())
+  title            String
+  description      String
+  status            ProjectStatus @default(UNASSIGNED)
+
+  buyerId          String
+  buyer            User          @relation("BuyerProjects", fields: [buyerId], references: [id])
+
+  assignedSolverId String?
+  tasks            Task[]
+  requests         Request[]
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model Request {
+  id        String        @id @default(uuid())
+  projectId String
+  solverId  String
+  status    RequestStatus @default(PENDING)
+
+  project   Project       @relation(fields: [projectId], references: [id])
+  solver    User          @relation(fields: [solverId], references: [id])
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  projectId  String
+  title       String
+  description String
+  deadline    DateTime
+  status      TaskStatus @default(IN_PROGRESS)
+
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  submission  Submission?
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Submission {
+  id        String   @id @default(uuid())
+  taskId    String   @unique
+  fileUrl   String
+  submittedAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
