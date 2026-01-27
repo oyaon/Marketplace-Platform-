@@ -12,7 +12,12 @@ const authMiddleware = require("./middleware/auth");
 
 const app = express();
 
-app.use(cors());
+// CORS configuration - allows frontend from environment variable or development
+const frontendUrl = process.env.FRONTEND_URL || "*";
+app.use(cors({
+  origin: frontendUrl,
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use((req, res, next) => {
