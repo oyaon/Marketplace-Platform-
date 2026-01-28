@@ -29,7 +29,6 @@ const getTasksByProject = async (req, res) => {
       include: {
         submission: true,
       },
-      orderBy: { createdAt: "desc" },
     });
 
     res.json(tasks);

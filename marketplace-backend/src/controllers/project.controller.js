@@ -124,13 +124,11 @@ const getProjectDetails = async (req, res) => {
         buyer: { select: { id: true, email: true } },
         tasks: {
           include: { submission: true },
-          orderBy: { createdAt: "desc" },
         },
         requests: {
           include: {
             solver: { select: { id: true, email: true } },
           },
-          orderBy: { createdAt: "desc" },
         },
       },
     });
