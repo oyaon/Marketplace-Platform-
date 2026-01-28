@@ -1,14 +1,30 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL) {
+  console.warn("⚠️  NEXT_PUBLIC_API_URL is not defined!");
+  console.warn("⚠️  Frontend will fail to connect to backend in production.");
+  console.warn("⚠️  Please set NEXT_PUBLIC_API_URL in Vercel environment variables.");
+  console.warn("⚠️  Current value: 'http://localhost:5000' (development only)");
+}
+
+// For production, API_URL must be set. Fallback to localhost only for development.
+const getApiUrl = () => {
+  if (!API_URL) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('NEXT_PUBLIC_API_URL must be set in production environment');
+    }
+    return "http://localhost:5000";
+  }
+  // Remove trailing slash if present
+  return API_URL.replace(/\/$/, '');
+};
 
 export async function apiFetch(
   endpoint: string,
   options: RequestInit = {}
 ) {
-  // Validate API URL is configured
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    console.warn("NEXT_PUBLIC_API_URL is not defined. Using default: http://localhost:5000");
-  }
-
+  const url = `${getApiUrl()}${endpoint}`;
+  
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("token")
@@ -20,8 +36,6 @@ export async function apiFetch(
     ...options.headers,
   };
 
-  const url = `${API_URL}${endpoint}`;
-  
   try {
     const res = await fetch(url, {
       ...options,
