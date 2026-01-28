@@ -1,8 +1,19 @@
 require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 const app = require("./app");
 const prisma = require("./config/prisma");
 
-const PORT = process.env.PORT || 5000;
+// Use Railway's dynamic PORT or default to 5000 for local development
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
+const HOST = process.env.HOST || '0.0.0.0';
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log("Created uploads directory:", uploadsDir);
+}
 
 const startServer = async () => {
   try {
@@ -11,8 +22,8 @@ const startServer = async () => {
     console.log("PostgreSQL connected");
 
     // Start the server
-    const server = app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`Server running on port ${PORT} host ${HOST}`);
       console.log("Server is listening and ready for connections...");
     });
 

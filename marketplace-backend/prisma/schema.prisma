@@ -15,6 +15,8 @@ enum Role {
 enum ProjectStatus {
   UNASSIGNED
   ASSIGNED
+  COMPLETED
+  CANCELLED
 }
 
 enum TaskStatus {
@@ -37,6 +39,7 @@ model User {
   role     Role     @default(SOLVER)
 
   projects Project[] @relation("BuyerProjects")
+  assignedProjects Project[] @relation("SolverProjects")
   requests Request[]
 }
 
@@ -50,6 +53,7 @@ model Project {
   buyer            User          @relation("BuyerProjects", fields: [buyerId], references: [id])
 
   assignedSolverId String?
+  solver           User?         @relation("SolverProjects", fields: [assignedSolverId], references: [id])
   tasks            Task[]
   requests         Request[]
 

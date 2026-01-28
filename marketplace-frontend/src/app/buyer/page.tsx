@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { apiFetch } from "@/lib/api";
+import { logout } from "@/lib/auth";
 
 interface Project {
   id: string;
@@ -29,12 +31,9 @@ export default function BuyerPage() {
           return;
         }
 
-        const res = await fetch("http://localhost:5000/api/projects", {
+        const data = await apiFetch("/api/projects", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (!res.ok) throw new Error("Failed to fetch projects");
-        const data = await res.json();
         setProjects(data);
       } catch (error) {
         console.error("Error:", error);
@@ -47,6 +46,10 @@ export default function BuyerPage() {
     fetchProjects();
   }, [router]);
 
+  const handleLogout = () => {
+    logout();
+  };
+
   if (loading) return <div className="p-6">Loading...</div>;
 
   return (
@@ -54,12 +57,20 @@ export default function BuyerPage() {
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">Buyer Dashboard</h1>
-          <Link
-            href="/buyer/projects/new"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
-          >
-            + New Project
-          </Link>
+          <div className="flex gap-4">
+            <Link
+              href="/buyer/projects/new"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+            >
+              + New Project
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {projects.length === 0 ? (
