@@ -1,9 +1,9 @@
 HTTP/1.1 405 Method Not Allowed
-allow: GET, PUT, PATCH, DELETE, POST
+allow: GET, PUT, POST, PATCH, DELETE
 content-type: application/json
-x-cloud-trace-context: 28ee9ffd2a5337c4fc8786396fb88169
+x-cloud-trace-context: 3a5da3ad0c2735f73f9b7dcf388e8b50
 Content-Length: 31
-date: Wed, 28 Jan 2026 18:15:26 GMT
+date: Wed, 28 Jan 2026 18:58:13 GMT
 server: Google Frontend
 Alt-Svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
 

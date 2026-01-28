@@ -1,13 +1,17 @@
 {
   "$schema": "https://railway.app/schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "nodeVersion": "20"
   },
   "deploy": {
     "startCommand": "npx prisma generate && npx prisma migrate deploy && npm start",
     "healthcheckPath": "/api/protected",
     "healthcheckTimeout": 60,
-    "restartPolicy": "always"
+    "restartPolicy": "always",
+    "environmentVariables": {
+      "NODE_ENV": "production"
+    }
   }
 }
 
