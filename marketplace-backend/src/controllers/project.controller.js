@@ -151,5 +151,104 @@ module.exports = {
   getOpenProjects,
   getProjectById,
   getProjectDetails,
+  getAssignedProjects,
+  updateProject,
+  deleteProject,
+};
+
+// Get assigned projects (Solver views their assigned projects)
+const getAssignedProjects = async (req, res) => {
+  try {
+    const projects = await prisma.project.findMany({
+      where: { assignedSolverId: req.user.id },
+      include: {
+        buyer: { select: { id: true, email: true } },
+        _count: {
+          select: { tasks: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json(projects);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update project (Buyer only)
+const updateProject = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, status } = req.body;
+
+    // Verify project exists and belongs to buyer
+    const existingProject = await prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!existingProject) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    if (existingProject.buyerId !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized: not your project" });
+    }
+
+    // Can only update if project is not assigned
+    if (existingProject.status === "ASSIGNED" && status && status !== "ASSIGNED") {
+      return res.status(400).json({ message: "Cannot change status of assigned project" });
+    }
+
+    const updateData = {};
+    if (title) updateData.title = title.trim();
+    if (description) updateData.description = description.trim();
+    if (status) updateData.status = status;
+
+    const project = await prisma.project.update({
+      where: { id },
+      data: updateData,
+    });
+
+    res.json(project);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Delete project (Buyer only)
+const deleteProject = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verify project exists and belongs to buyer
+    const existingProject = await prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!existingProject) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    if (existingProject.buyerId !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized: not your project" });
+    }
+
+    // Can only delete if project is not assigned
+    if (existingProject.status === "ASSIGNED") {
+      return res.status(400).json({ message: "Cannot delete assigned project" });
+    }
+
+    await prisma.project.delete({
+      where: { id },
+    });
+
+    res.json({ message: "Project deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };
 

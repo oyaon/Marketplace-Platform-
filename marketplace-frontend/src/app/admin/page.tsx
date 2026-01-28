@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api";
+import { logout } from "@/lib/auth";
 
 interface User {
   id: string;
+  name: string;
   email: string;
   role: string;
+  createdAt: string;
 }
 
 interface Project {
@@ -35,22 +39,15 @@ export default function AdminPage() {
         }
 
         // Fetch users
-        const usersRes = await fetch("http://localhost:5000/api/users", {
+        const usersData = await apiFetch("/api/users", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!usersRes.ok) throw new Error("Failed to fetch users");
-        const usersData = await usersRes.json();
         setUsers(usersData);
 
         // Fetch projects
-        const projectsRes = await fetch(
-          "http://localhost:5000/api/projects/all",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!projectsRes.ok) throw new Error("Failed to fetch projects");
-        const projectsData = await projectsRes.json();
+        const projectsData = await apiFetch("/api/projects/all", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setProjects(projectsData);
       } catch (error) {
         console.error("Error:", error);
@@ -71,22 +68,17 @@ export default function AdminPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(
-        `http://localhost:5000/api/users/${selectedUserId}/assign-buyer`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await apiFetch(`/api/users/${selectedUserId}/assign-buyer`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      if (!res.ok) throw new Error("Failed to assign role");
       alert("Buyer role assigned successfully");
 
       // Refresh users list
-      const usersRes = await fetch("http://localhost:5000/api/users", {
+      const usersData = await apiFetch("/api/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const usersData = await usersRes.json();
       setUsers(usersData);
       setSelectedUserId("");
     } catch (error) {
@@ -95,12 +87,24 @@ export default function AdminPage() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+  };
+
   if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
+          >
+            Logout
+          </button>
+        </div>
 
         {/* Assign Buyer Role Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -136,13 +140,16 @@ export default function AdminPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-100 border-b">
                 <tr>
+                  <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Joined</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
                   <tr key={user.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-3">{user.name || "N/A"}</td>
                     <td className="px-4 py-3">{user.email}</td>
                     <td className="px-4 py-3">
                       <span
@@ -157,6 +164,9 @@ export default function AdminPage() {
                         {user.role}
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -169,9 +179,8 @@ export default function AdminPage() {
           <h2 className="text-2xl font-bold mb-4">All Projects ({projects.length})</h2>
           <div className="grid gap-4">
             {projects.map((project) => (
-              <Link
+              <div
                 key={project.id}
-                href={`/admin/projects/${project.id}`}
                 className="p-4 border rounded-lg hover:bg-gray-50 transition"
               >
                 <div className="flex justify-between items-start">
@@ -186,7 +195,9 @@ export default function AdminPage() {
                       className={`px-3 py-1 rounded text-xs font-semibold ${
                         project.status === "ASSIGNED"
                           ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
+                          : project.status === "COMPLETED"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {project.status}
@@ -197,7 +208,7 @@ export default function AdminPage() {
                     </p>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
